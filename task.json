@@ -1,0 +1,74 @@
+{
+  "id": "2f32dc10-7d4d-46d0-b3a1-f78cc01b8a7c",
+  "name": "InstallWindowsService",
+  "friendlyName": "Install Windows Service",
+  "description": "Install a Windows Service that is running on the same machine as the agent.",
+  "author": "Stone Co.",
+  "helpMarkDown": "Install a Windows Service that is running on the same machine as the agent.",
+  "category": "Utility",
+  "visibility": [
+    "Release"
+  ],
+  "demands": [],
+  "version": {
+    "Major": "0",
+    "Minor": "0",
+    "Patch": "1"
+  },
+  "minimumAgentVersion": "1.95.0",
+  "instanceNameFormat": "Install Service $(ServiceName)",
+  "groups":[
+    {
+      "name" : "Advanced",
+      "displayName": "Advanced Options",
+      "isExpanded": false
+    }
+  ],
+  "inputs": [
+    {
+      "name": "ServiceName",
+      "type": "string",
+      "label": "Service Name",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The name of the service that will be installed."
+    },  
+    {
+      "name": "InstallCommand",
+      "type": "string",
+      "label": "Install Command",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The command the will be run to install the service"
+    },  
+    {
+      "name": "WorkingDir",
+      "type": "string",
+      "label": "Working Directory",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "Working Directory that the install command will execute."
+    },
+    {
+      "name": "ServiceAccount",
+      "type": "string",
+      "label": "Service Account",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Use this field to specify which user should run the service."
+    },
+    {
+      "name": "ServicePassword",
+      "type": "string",
+      "label": "Service Account",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Use this field to specify which user should run the service."
+    }
+  ],
+  "execution": {
+    "PowerShell3": {
+      "target": "InstallWindowsService.ps1"
+    }
+  }
+}
