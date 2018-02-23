@@ -80,7 +80,7 @@
       "groupName": "Advanced",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Use this field to specify the passoword of the user should run the service."
+      "helpMarkDown": "Use this field to specify the passoword of the user should run the service.<br>It can accept variable defined in Build/Release definitions as '$(serviceAccountPassword)'. <br>You may mark variable type as 'secret' to secure it."
     }
   ],
   "execution": {
