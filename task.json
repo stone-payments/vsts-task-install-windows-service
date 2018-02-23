@@ -13,7 +13,7 @@
   "version": {
     "Major": "0",
     "Minor": "1",
-    "Patch": "5"
+    "Patch": "12"
   },
   "minimumAgentVersion": "1.95.0",
   "instanceNameFormat": "Install Service $(ServiceName)",
@@ -32,14 +32,36 @@
       "defaultValue": "",
       "required": true,
       "helpMarkDown": "The name of the service that will be installed."
-    },  
+    },
     {
-      "name": "InstallCommand",
+      "name": "InstallationMode",
+      "type": "radio",
+      "label": "Installation Mode",
+      "defaultValue": "InstallUtils",
+      "options": {
+        "InstallUtils": "InstallUtils",
+        "CustomCommand": "Custom Command"
+      },
+      "required": true,
+      "helpMarkDown": "This setting is to select the way the service will be installed, using the InstallUtils or using a custom command for libraries like TopShelf."
+    }, 
+    {
+      "name": "ServiceBinary",
       "type": "string",
-      "label": "Install Command",
+      "label": "Service Binary",
+      "visibleRule": "InstallationMode = CustomCommand",
       "defaultValue": "",
       "required": true,
-      "helpMarkDown": "The command the will be run to install the service"
+      "helpMarkDown": "The Binary that will run the custom command"
+    },  
+    {
+      "name": "InstallArguments",
+      "type": "string",
+      "label": "Install Arguments",
+      "visibleRule": "InstallationMode = CustomCommand",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "Additional arguments for the installation."
     },  
     {
       "name": "WorkingDir",

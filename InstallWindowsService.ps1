@@ -87,13 +87,16 @@ function Install-WindowsService ($winServiceName, $installCommand, $workingDir) 
         Stop-Service $serviceName
         $changeResult = $wmiService.Change($null,$null,$null,$null,$null,$null,$account,$password,$null,$null,$null)
         if($changeResult.ReturnValue -ne 0 ){
-            throw $win32ServiceErrors.$changeResult.value
+            throw "An error ocurred while trying to change the service user: " + $win32ServiceErrors.[int]$changeResult.ReturnValue
         }
         try{
             Start-Service $serviceName
-        }catch{
+        }catch{        
             throw "Service not able to start after service account change. Verify by trying run the service executable/command manually."
-        }
+        }finally{
+            Stop-Service $serviceName
+        }   
+        
         $wmiService = gwmi win32_service -filter $serviceFilter
         
         if($wmiService.StartName -ne $account){
