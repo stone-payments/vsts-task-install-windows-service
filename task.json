@@ -50,9 +50,24 @@
       "helpMarkDown": "Working Directory that the install command will execute."
     },
     {
+      "name": "ServiceUser",
+      "type": "radio",
+      "label": "Service User",
+      "defaultValue": "Default",
+      "groupName": "Advanced",
+      "option": {
+        "Default": "Default",
+        "Custom": "Custom"
+      },
+      "required": true,
+      "helpMarkDown": "The user that will run the installed service. The default user is the O.S. user."
+    },
+    {
       "name": "ServiceAccount",
       "type": "string",
-      "label": "Service Account",
+      "label": "Service Account Username",
+      "visibleRule": "ServiceUser = Custom",
+      "groupName": "Advanced",
       "defaultValue": "",
       "required": false,
       "helpMarkDown": "Use this field to specify which user should run the service."
@@ -60,10 +75,12 @@
     {
       "name": "ServicePassword",
       "type": "string",
-      "label": "Service Account",
+      "label": "Service Account Password",
+      "visibleRule": "ServiceUser = Custom",
+      "groupName": "Advanced",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Use this field to specify which user should run the service."
+      "helpMarkDown": "Use this field to specify the passoword of the user should run the service."
     }
   ],
   "execution": {

@@ -51,6 +51,28 @@ function Install-WindowsService ($winServiceName, $installCommand, $workingDir) 
       Write-Output "$return"
     }
   }
+
+  function Set-ServiceAccount ($account,$password,$serviceName){
+    $serviceFilter = "name='$serviceName'"
+
+    $wmiService = gwmi win32_service -filter $serviceFilter
+    if ($wmiService) {
+        Stop-Service $serviceName
+        $wmiService.Change($null,$null,$null,$null,$null,$null,$account,$password,$null,$null,$null)
+        try{
+            Start-Service $serviceName
+        }catch{
+            Write-Warning "Service not able to start after service account change. Verify by trying run the service executable/command manually."
+        }
+        $wmiService = gwmi win32_service -filter $serviceFilter
+        
+        if($wmiService.StartName -ne $account){
+            throw "After trying to change the service account, it does not match the provided one. Failed to change the service account."
+        }
+    }else{
+        throw "The service $serviceName was not found. Could not change the service account."
+    }
+}
 function Main () {
     # For more information on the VSTS Task SDK:
     # https://github.com/Microsoft/vsts-task-lib
@@ -60,9 +82,15 @@ function Main () {
         $serviceName = Get-VstsInput -Name "ServiceName" -Require
         $installCommand = Get-VstsInput -Name "InstallCommand" -Require
         $workingDir = Get-VstsInput -Name "WorkingDir" -Require
+        $serviceUser = Get-VstsInput -Name "ServiceUser" -Require
+        $serviceAccount = Get-VstsInput -Name "ServiceAccount"
+        $servicePassword = Get-VstsInput -Name "ServicePassword"
 
-        Write-Host "Installing service $serviceName..."
         Install-WindowsService  $serviceName $installCommand $workingDir
+
+        if($serviceUser -ne "Default"){
+            Set-ServiceAccount $serviceAccount $servicePassword $serviceName
+        }
 
     } finally {
         Trace-VstsLeavingInvocation $MyInvocation
