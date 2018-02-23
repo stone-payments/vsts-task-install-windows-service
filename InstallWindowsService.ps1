@@ -62,7 +62,7 @@ function Install-WindowsService ($winServiceName, $installCommand, $workingDir) 
         try{
             Start-Service $serviceName
         }catch{
-            Write-Warning "Service not able to start after service account change. Verify by trying run the service executable/command manually."
+            throw "Service not able to start after service account change. Verify by trying run the service executable/command manually."
         }
         $wmiService = gwmi win32_service -filter $serviceFilter
         
@@ -86,10 +86,12 @@ function Main () {
         $serviceAccount = Get-VstsInput -Name "ServiceAccount"
         $servicePassword = Get-VstsInput -Name "ServicePassword"
 
-        Install-WindowsService  $serviceName $installCommand $workingDir
+        $service = Get-Service $serviceName
+
+        Install-WindowsService  $service.name $installCommand $workingDir
 
         if($serviceUser -ne "Default"){
-            Set-ServiceAccount $serviceAccount $servicePassword $serviceName
+            Set-ServiceAccount $serviceAccount $servicePassword $service.name
         }
 
     } finally {
