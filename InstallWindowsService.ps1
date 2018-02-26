@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param([switch]$dotSourceOnly)
 
-$win32ServiceErrors =@{
+$win32ServiceChangeErrors =@{
     0="The request was accepted.";
     1="The request is not supported.";
     2="The user did not have the necessary access.";
@@ -28,78 +28,70 @@ $win32ServiceErrors =@{
     23="The service exists in the database of services available from the system.";
     24="The service is currently paused in the system.";
 }
-function Install-WindowsService ($winServiceName, $installCommand, $workingDir) {
-
+function Install-WindowsService ($winServiceName, $installCommand) {
+    
     Write-Host "ServiceName: $winServiceName"
-  
+    
     # Mount service filter criteria.
     $serviceSearchFilter = "Name='$winServiceName'"
     # Get installed service
     $installedService = Get-WmiObject -Class Win32_Service -Filter $serviceSearchFilter
-  
+    
     # If service is already installed remove previous version.
     if($installedService -ne $null){
-  
-      # Try delete service.
-      Write-Host "Deleting service..."
-      $deleteResult = $installedService.Delete()
-  
-      # Verify if service was deleted.
-      if($deleteResult.ReturnValue -ne 0){
-        throw "Service $winServiceName cannot be removed"
-      }
+        
+        # Try delete service.
+        Write-Host "Deleting service..."
+        $deleteResult = $installedService.Delete()
+        
+        # Verify if service was deleted.
+        if($deleteResult.ReturnValue -ne 0){
+            throw "Service $winServiceName cannot be removed"
+        }
     }
-  
-    # Mount install command
-    if(-not ($installCommand.ToString().Contains($workingDir))){
-      $installCommand = "$workingDir\$installCommand"
-    }
-  
+    
     $lastec = ""
     $return = ""
-  
+    
     "Install command: $installCommand"
     # Run install command
     try {
-      ## Executes the command and throws the stdout and stderr to a String  
-      $return = iex  "$installCommand 2>&1"
-      $lastec = $LASTEXITCODE
-  
-      if ($lastec -ne 0) {
-        Write-Host "Error installing."
-        throw "$return"
-      }
-      else {
-        Write-Host "Install succeeded."
-      }
+        ## Executes the command and throws the stdout and stderr to a String  
+        $return = iex  "$installCommand 2>&1"
+        $lastec = $LASTEXITCODE
+        
+        if ($lastec -ne 0) {
+            throw "Error installing. Return of the installation command: $return "
+        }
+        else {
+            Write-Host "Install succeeded."
+        }
     }
     catch {
-      Write-Output "Error installing!"
-      Write-Output "$return"
+        throw "Error installing. Return of the installation command: $return "
     }
-  }
-  Install-WindowsServiceWithInstallUtils ($winServiceName, $serviceBinary, $serviceBinaryPath){
+}
+function Install-WindowsServiceWithInstallUtils ($winServiceName, $serviceBinaryPath){
     $installUtilPath = Get-ChildItem "$env:SystemDrive:\Windows\Microsoft.NET\Framework64\v*\InstallUtil.exe" |  Select-Object -Last 1
-
+    
     if($installUtilPath -eq $Null){
         throw "InstallUtil.exe could not be found on the machine. Please make sure that .NET Framework is installed."
     }
 
-    $installUtilTarget = Join-Path $serviceBinaryPath $serviceBinary
-    $installCommand = "$installUtilPath $serviceBinary"
+    $installCommand = "$installUtilPath $serviceBinaryPath"
+    
+    Install-WindowsService  $winServiceName $installCommand
+}
 
-    Install-WindowsService  $winServiceName $installCommand $serviceBinaryPath
-  }
-
-  function Set-ServiceAccount ($account,$password,$serviceName){
+function Set-ServiceAccount ($account,$password,$serviceName){
     $serviceFilter = "name='$serviceName'"
-
+    
     $wmiService = gwmi win32_service -filter $serviceFilter
     if ($wmiService) {
         Stop-Service $serviceName
         $changeResult = $wmiService.Change($null,$null,$null,$null,$null,$null,$account,$password,$null,$null,$null)
         if($changeResult.ReturnValue -ne 0 ){
-            throw "An error ocurred while trying to change the service user: " + $win32ServiceErrors.[int]$changeResult.ReturnValue
+            throw "An error ocurred while trying to change the service user: " + $win32ServiceChangeErrors.[int]$changeResult.ReturnValue
         }
         try{
             Start-Service $serviceName
@@ -108,7 +100,7 @@ function Install-WindowsService ($winServiceName, $installCommand, $workingDir) 
         }finally{
             Stop-Service $serviceName
         }   
-
+        
         $wmiService = gwmi win32_service -filter $serviceFilter
         
         if($wmiService.StartName -ne $account){
@@ -118,6 +110,7 @@ function Install-WindowsService ($winServiceName, $installCommand, $workingDir) 
         throw "The service $serviceName was not found. Could not change the service account."
     }
 }
+
 function Main () {
     # For more information on the VSTS Task SDK:
     # https://github.com/Microsoft/vsts-task-lib
@@ -125,37 +118,39 @@ function Main () {
     try {
         
         $serviceName = Get-VstsInput -Name "ServiceName" -Require
-        $serviceBinary = Get-VstsInput -Name "ServiceBinary" -Require
         $serviceBinaryPath = Get-VstsInput -Name "ServiceBinaryPath" -Require
         $installationMode = Get-VstsInput -Name "installationMode" -Require
         $installArguments = Get-VstsInput -Name "InstallArguments"
         $serviceUser = Get-VstsInput -Name "ServiceUser" -Require
         $serviceAccount = Get-VstsInput -Name "ServiceAccount"
         $servicePassword = Get-VstsInput -Name "ServicePassword"
-
-        $service = Get-Service $serviceName
-
-        if($service -eq $Null){
+        
+        try{
+            $service = Get-Service $serviceName
+        }catch{
             Write-Host "Service $serviceName not found on the current machine, this is probably the first install."
             $service = @{}
             $service.name = $serviceName
         }
         
+        #Convert Unix-like paths to a Windows-like path
+        $serviceBinaryPath = Convert-Path $serviceBinaryPath
+                        
         if($installationMode -eq "InstallUtils"){
-            Install-WindowsServiceWithInstallUtils $service.name $serviceBinary $serviceBinaryPath
-
+            Install-WindowsServiceWithInstallUtils $service.name $serviceBinaryPath
+            
         }elseif ($installationMode -eq "CustomCommand") {
             $installCommand = "$serviceBinaryPath $installArguments"
-            Install-WindowsService  $service.name $installCommand $serviceBinaryPath             
+            Install-WindowsService  $service.name $installCommand            
         }else{
             throw "Invalid installation mode."
         }        
-
+        
         # Change the user that runs the service
         if($serviceUser -ne "Default"){
             Set-ServiceAccount $serviceAccount $servicePassword $service.name
         }
-
+        
     } finally {
         Trace-VstsLeavingInvocation $MyInvocation
     }

@@ -13,7 +13,7 @@
   "version": {
     "Major": "0",
     "Minor": "1",
-    "Patch": "17"
+    "Patch": "21"
   },
   "minimumAgentVersion": "1.95.0",
   "instanceNameFormat": "Install Service $(ServiceName)",
@@ -32,22 +32,14 @@
       "defaultValue": "",
       "required": true,
       "helpMarkDown": "The name of the service that will be installed."
-    }, 
-    {
-      "name": "ServiceBinary",
-      "type": "string",
-      "label": "Service Binary",
-      "defaultValue": "",
-      "required": true,
-      "helpMarkDown": "The Binary which contains the service that will be installed, usually a .dll ou .exe."
-    }, 
+    },     
     {
       "name": "ServiceBinaryPath",
       "type": "string",
       "label": "Service Binary Path",
       "defaultValue": "",
       "required": true,
-      "helpMarkDown": "The path that is located the binary of the service."
+      "helpMarkDown": "The FULL path to the binary that will be installed, usually a .dll ou .exe.<br>Example: C:\\app\\MyService.exe"
     },
     {
       "name": "InstallationMode",
@@ -59,7 +51,7 @@
         "CustomCommand": "Custom Command"
       },
       "required": true,
-      "helpMarkDown": "This setting is to select the way the service will be installed, using the InstallUtils or using a custom command for libraries like TopShelf.<br>With InstallUtils, the installation will be calling like this: InstallUtils.exe $(ServiceBinary).<br> With custom command, the service binary will be called with custom arguments: $(ServiceBinary) $(InstallArguments)"
+      "helpMarkDown": "This setting is to select the way the service will be installed, using the InstallUtils or using a custom command for libraries like TopShelf.<br>With InstallUtils, the installation will be calling like this: InstallUtils.exe $(ServiceBinary).<br> With custom command, the service binary will be called with custom arguments: $(ServiceBinaryPath) $(InstallArguments)"
     },  
     {
       "name": "InstallArguments",
