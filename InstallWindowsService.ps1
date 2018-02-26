@@ -135,7 +135,8 @@ function Main () {
         
         #Convert Unix-like paths to a Windows-like path
         $serviceBinaryPath = Convert-Path $serviceBinaryPath
-                        
+        
+        ## Installing service
         if($installationMode -eq "InstallUtils"){
             Install-WindowsServiceWithInstallUtils $service.name $serviceBinaryPath
             
@@ -145,7 +146,10 @@ function Main () {
         }else{
             throw "Invalid installation mode."
         }        
-        
+
+        # Updating service object to get the new installed service
+        $service = Get-Service $serviceName
+
         # Change the user that runs the service
         if($serviceUser -ne "Default"){
             Set-ServiceAccount $serviceAccount $servicePassword $service.name
