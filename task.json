@@ -13,7 +13,7 @@
   "version": {
     "Major": "0",
     "Minor": "1",
-    "Patch": "12"
+    "Patch": "17"
   },
   "minimumAgentVersion": "1.95.0",
   "instanceNameFormat": "Install Service $(ServiceName)",
@@ -32,6 +32,22 @@
       "defaultValue": "",
       "required": true,
       "helpMarkDown": "The name of the service that will be installed."
+    }, 
+    {
+      "name": "ServiceBinary",
+      "type": "string",
+      "label": "Service Binary",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The Binary which contains the service that will be installed, usually a .dll ou .exe."
+    }, 
+    {
+      "name": "ServiceBinaryPath",
+      "type": "string",
+      "label": "Service Binary Path",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "The path that is located the binary of the service."
     },
     {
       "name": "InstallationMode",
@@ -43,16 +59,7 @@
         "CustomCommand": "Custom Command"
       },
       "required": true,
-      "helpMarkDown": "This setting is to select the way the service will be installed, using the InstallUtils or using a custom command for libraries like TopShelf."
-    }, 
-    {
-      "name": "ServiceBinary",
-      "type": "string",
-      "label": "Service Binary",
-      "visibleRule": "InstallationMode = CustomCommand",
-      "defaultValue": "",
-      "required": true,
-      "helpMarkDown": "The Binary that will run the custom command"
+      "helpMarkDown": "This setting is to select the way the service will be installed, using the InstallUtils or using a custom command for libraries like TopShelf.<br>With InstallUtils, the installation will be calling like this: InstallUtils.exe $(ServiceBinary).<br> With custom command, the service binary will be called with custom arguments: $(ServiceBinary) $(InstallArguments)"
     },  
     {
       "name": "InstallArguments",
@@ -62,14 +69,6 @@
       "defaultValue": "",
       "required": true,
       "helpMarkDown": "Additional arguments for the installation."
-    },  
-    {
-      "name": "WorkingDir",
-      "type": "string",
-      "label": "Working Directory",
-      "defaultValue": "",
-      "required": true,
-      "helpMarkDown": "Working Directory that the install command will execute."
     },
     {
       "name": "ServiceUser",

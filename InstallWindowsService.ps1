@@ -78,6 +78,18 @@ function Install-WindowsService ($winServiceName, $installCommand, $workingDir) 
       Write-Output "$return"
     }
   }
+  Install-WindowsServiceWithInstallUtils ($winServiceName, $serviceBinary, $serviceBinaryPath){
+    $installUtilPath = Get-ChildItem "$env:SystemDrive:\Windows\Microsoft.NET\Framework64\v*\InstallUtil.exe" |  Select-Object -Last 1
+
+    if($installUtilPath -eq $Null){
+        throw "InstallUtil.exe could not be found on the machine. Please make sure that .NET Framework is installed."
+    }
+
+    $installUtilTarget = Join-Path $serviceBinaryPath $serviceBinary
+    $installCommand = "$installUtilPath $serviceBinary"
+
+    Install-WindowsService  $winServiceName $installCommand $serviceBinaryPath
+  }
 
   function Set-ServiceAccount ($account,$password,$serviceName){
     $serviceFilter = "name='$serviceName'"
@@ -96,7 +108,7 @@ function Install-WindowsService ($winServiceName, $installCommand, $workingDir) 
         }finally{
             Stop-Service $serviceName
         }   
-        
+
         $wmiService = gwmi win32_service -filter $serviceFilter
         
         if($wmiService.StartName -ne $account){
@@ -113,16 +125,33 @@ function Main () {
     try {
         
         $serviceName = Get-VstsInput -Name "ServiceName" -Require
-        $installCommand = Get-VstsInput -Name "InstallCommand" -Require
-        $workingDir = Get-VstsInput -Name "WorkingDir" -Require
+        $serviceBinary = Get-VstsInput -Name "ServiceBinary" -Require
+        $serviceBinaryPath = Get-VstsInput -Name "ServiceBinaryPath" -Require
+        $installationMode = Get-VstsInput -Name "installationMode" -Require
+        $installArguments = Get-VstsInput -Name "InstallArguments"
         $serviceUser = Get-VstsInput -Name "ServiceUser" -Require
         $serviceAccount = Get-VstsInput -Name "ServiceAccount"
         $servicePassword = Get-VstsInput -Name "ServicePassword"
 
         $service = Get-Service $serviceName
 
-        Install-WindowsService  $service.name $installCommand $workingDir
+        if($service -eq $Null){
+            Write-Host "Service $serviceName not found on the current machine, this is probably the first install."
+            $service = @{}
+            $service.name = $serviceName
+        }
+        
+        if($installationMode -eq "InstallUtils"){
+            Install-WindowsServiceWithInstallUtils $service.name $serviceBinary $serviceBinaryPath
 
+        }elseif ($installationMode -eq "CustomCommand") {
+            $installCommand = "$serviceBinaryPath $installArguments"
+            Install-WindowsService  $service.name $installCommand $serviceBinaryPath             
+        }else{
+            throw "Invalid installation mode."
+        }        
+
+        # Change the user that runs the service
         if($serviceUser -ne "Default"){
             Set-ServiceAccount $serviceAccount $servicePassword $service.name
         }
