@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param([switch]$dotSourceOnly)
 
+$ErrorActionPreference="Stop"
 $win32ServiceChangeErrors =@{
     0="The request was accepted.";
     1="The request is not supported.";
@@ -93,13 +94,13 @@ function Set-ServiceAccount ($account,$password,$serviceName){
         if($changeResult.ReturnValue -ne 0 ){
             throw "An error ocurred while trying to change the service user: " + $win32ServiceChangeErrors.[int]$changeResult.ReturnValue
         }
-        try{
+<#         try{
             Start-Service $serviceName
         }catch{        
             throw "Service not able to start after service account change. Verify by trying run the service executable/command manually."
         }finally{
             Stop-Service $serviceName
-        }   
+        }    #>
         
         $wmiService = gwmi win32_service -filter $serviceFilter
         
@@ -111,6 +112,16 @@ function Set-ServiceAccount ($account,$password,$serviceName){
     }
 }
 
+function Get-InstalledServiceName($serviceName){        
+    try{        
+        $service = Get-Service $serviceName
+        return $service.name
+    }catch{
+        Write-Host "Service $serviceName not found on the current machine, this is probably the first install.Trying to install $serviceName for the first time"    
+        return $serviceName
+    }
+}
+
 function Main () {
     # For more information on the VSTS Task SDK:
     # https://github.com/Microsoft/vsts-task-lib
@@ -119,40 +130,36 @@ function Main () {
         
         $serviceName = Get-VstsInput -Name "ServiceName" -Require
         $serviceBinaryPath = Get-VstsInput -Name "ServiceBinaryPath" -Require
-        $installationMode = Get-VstsInput -Name "installationMode" -Require
+        
+        $installationMode = Get-VstsInput -Name "InstallationMode" -Require
         $installArguments = Get-VstsInput -Name "InstallArguments"
+        
         $serviceUser = Get-VstsInput -Name "ServiceUser" -Require
         $serviceAccount = Get-VstsInput -Name "ServiceAccount"
         $servicePassword = Get-VstsInput -Name "ServicePassword"
-        
-        try{
-            $service = Get-Service $serviceName
-        }catch{
-            Write-Host "Service $serviceName not found on the current machine, this is probably the first install."
-            $service = @{}
-            $service.name = $serviceName
-        }
-        
+
         #Convert Unix-like paths to a Windows-like path
         $serviceBinaryPath = Convert-Path $serviceBinaryPath
+  
+        $serviceInstallationName = Get-InstalledServiceName $serviceName
         
         ## Installing service
         if($installationMode -eq "InstallUtils"){
-            Install-WindowsServiceWithInstallUtils $service.name $serviceBinaryPath
+            Install-WindowsServiceWithInstallUtils $serviceInstallationName $serviceBinaryPath
             
         }elseif ($installationMode -eq "CustomCommand") {
             $installCommand = "$serviceBinaryPath $installArguments"
-            Install-WindowsService  $service.name $installCommand            
+            Install-WindowsService  $serviceInstallationName $installCommand            
         }else{
             throw "Invalid installation mode."
         }        
 
         # Updating service object to get the new installed service
-        $service = Get-Service $serviceName
+        $installedService = Get-Service $serviceName
 
         # Change the user that runs the service
         if($serviceUser -ne "Default"){
-            Set-ServiceAccount $serviceAccount $servicePassword $service.name
+            Set-ServiceAccount $serviceAccount $servicePassword $installedService.name
         }
         
     } finally {
