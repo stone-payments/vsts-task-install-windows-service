@@ -26,7 +26,7 @@ Describe "Main" {
 
         # Act
         Main
-        It "should call Install-WindowsServiceWithInstallUtils" {           
+        It "Should call Install-WindowsServiceWithInstallUtils" {           
             # Assert
             Assert-MockCalled Install-WindowsServiceWithInstallUtils -ParameterFilter { ($winServiceName -eq "MyService") -and ($serviceBinaryPath -eq "C:\apps\some_service\MyCustomService.exe")  }
         }       
@@ -46,12 +46,12 @@ Describe "Main" {
 
         # Act
         Main
-        It "should call Install-WindowsServiceWithInstallUtils" {           
+        It "Should call Install-WindowsServiceWithInstallUtils" {           
             # Assert
             Assert-MockCalled Install-WindowsServiceWithInstallUtils -ParameterFilter { ($winServiceName -eq "MyService") -and ($serviceBinaryPath -eq "C:\apps\some_service\MyCustomService.exe")  }
         }
         
-        It "should call Set-ServiceAccount with custom user credentials"{
+        It "Should call Set-ServiceAccount with custom user credentials"{
             # Assert
             Assert-MockCalled Set-ServiceAccount -ParameterFilter { ($account -eq "NewUser") -and ($password -eq "NewPassword") -and ($serviceName -eq "MyService")  }
         }
@@ -69,7 +69,7 @@ Describe "Main" {
 
         # Act
         Main
-        It "should call Install-WindowsService" {           
+        It "Should call Install-WindowsService" {           
             # Assert
             Assert-MockCalled Install-WindowsService -ParameterFilter { ($winServiceName -eq "MyService") -and ($installCommand -eq "C:\apps\some_service\MyCustomService.exe --install")  }
         }
@@ -91,12 +91,12 @@ Describe "Main" {
 
         # Act
         Main
-        It "should call Install-WindowsService" {           
+        It "Should call Install-WindowsService" {           
             # Assert
             Assert-MockCalled Install-WindowsService -ParameterFilter { ($winServiceName -eq "MyService") -and ($installCommand -eq "C:\apps\some_service\MyCustomService.exe --install")  }
         }
 
-        It "should call Set-ServiceAccount with custom user credentials"{
+        It "Should call Set-ServiceAccount with custom user credentials"{
             # Assert
             Assert-MockCalled Set-ServiceAccount -ParameterFilter { ($account -eq "NewUser") -and ($password -eq "NewPassword") -and ($serviceName -eq "MyService")  }
         }
@@ -113,7 +113,7 @@ Describe "Main" {
 
         # Act
         
-        It "should throw and Exeption" {           
+        It "Should throw and Exeption" {           
             # Assert
             {Main} | Should -Throw "Invalid installation mode."
         }
@@ -265,7 +265,7 @@ Describe "Set-ServiceAccount"{
         }
         Mock Stop-Service {}
 
-        It "should thrown an exception with the error message"{
+        It "Should thrown an exception with the error message"{
             {Set-ServiceAccount $account $password $serviceName} | Should -Throw "An error ocurred while trying to change the service user: The request is not supported."
         }
     }
@@ -282,7 +282,7 @@ Describe "Set-ServiceAccount"{
         }
         Mock Stop-Service {}
 
-        It "hould thrown an exception with the error message"{
+        It "Should thrown an exception with the error message"{
             {Set-ServiceAccount $account $password $serviceName} | Should -Throw "After trying to change the service account, it does not match the provided one. Failed to change the service account."
         }
     }
