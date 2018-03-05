@@ -31,6 +31,7 @@ Describe "Main" {
             Assert-MockCalled Install-WindowsServiceWithInstallUtils -ParameterFilter { ($winServiceName -eq "MyService") -and ($serviceBinaryPath -eq "C:\apps\some_service\MyCustomService.exe")  }
         }       
     }
+
     Context "Installing a service with installUtils and a custom user" {
         # Arrange
         Mock Get-VstsInput -ParameterFilter { $Name -eq "InstallationMode" } -MockWith { return "InstallUtils" }
@@ -55,6 +56,7 @@ Describe "Main" {
             Assert-MockCalled Set-ServiceAccount -ParameterFilter { ($account -eq "NewUser") -and ($password -eq "NewPassword") -and ($serviceName -eq "MyService")  }
         }
     }
+
     Context "Installing a service with custom command and default user" {
         # Arrange
         Mock Get-VstsInput -ParameterFilter { $Name -eq "InstallationMode" } -MockWith { return "CustomCommand" }
@@ -73,6 +75,7 @@ Describe "Main" {
         }
 
     }
+
     Context "Installing a service with custom command and custom user" {
         # Arrange
         Mock Get-VstsInput -ParameterFilter { $Name -eq "InstallationMode" } -MockWith { return "CustomCommand" }
@@ -98,6 +101,7 @@ Describe "Main" {
             Assert-MockCalled Set-ServiceAccount -ParameterFilter { ($account -eq "NewUser") -and ($password -eq "NewPassword") -and ($serviceName -eq "MyService")  }
         }
     }
+
     Context "Installing a service with a installation that is not custom or InstallUtils" {
         # Arrange
         Mock Get-VstsInput -ParameterFilter { $Name -eq "InstallationMode" } -MockWith { return "OtherInstallMode" }
@@ -117,6 +121,7 @@ Describe "Main" {
     }
 }
 
+
 Describe "Get-InstalledServiceName"{
     
     $serviceName = "MyService"
@@ -135,6 +140,7 @@ Describe "Get-InstalledServiceName"{
             Get-InstalledServiceName $serviceDisplayName | Should -Be "MyService"              
         }
     }
+
     Context "With a service that already exists on the machine, passing the name"{
 
         BeforeEach{
@@ -149,6 +155,7 @@ Describe "Get-InstalledServiceName"{
             Get-InstalledServiceName $serviceName | Should -Be "MyService"              
         }
     }
+
     Context "With a service that does NOT exists on the machine, passing the name"{
         Mock Write-Host {}
         
@@ -161,9 +168,11 @@ Describe "Get-InstalledServiceName"{
     }
 }
 
+
 Describe "Install-WindowsServiceWithInstallUtils" {
     $serviceName = "MyService" 
     $serviceBinaryPath = "C:\apps\some_service\MyCustomService.exe"
+
     Context "When installing a service in a machine that does NOT have installUtills installed"{
         Mock Get-ChildItem -MockWith {$Null}
 
@@ -171,6 +180,7 @@ Describe "Install-WindowsServiceWithInstallUtils" {
             {Install-WindowsServiceWithInstallUtils $service $serviceBinaryPath } | Should -Throw "InstallUtil.exe could not be found on the machine. Please make sure that .NET Framework is installed."
         }
     }
+
     Context "When installing a service in a machine that does have installUtills installed"{
         Mock Get-ChildItem -MockWith {"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\InstallUtil.exe"}
         Mock Install-WindowsService -MockWith {}
@@ -200,6 +210,7 @@ Describe "Install-WindowsService"{
             { Install-WindowsService $serviceName $installCommand  } | Should -Throw "Service MyService cannot be removed"
         }
     }
+
     Context "When the service already exists on the machine and the installation completes"{
         Mock Invoke-Expression {$global:LASTEXITCODE = 0; return "returnMessage"}
         Mock Write-Host {}
@@ -230,6 +241,7 @@ Describe "Install-WindowsService"{
     }
 
 }
+
 Describe "Set-ServiceAccount"{
     $account = "customUser"
     $password = "customPassword"
@@ -270,7 +282,7 @@ Describe "Set-ServiceAccount"{
         }
         Mock Stop-Service {}
 
-        It "should thrown an exception with the error message"{
+        It "hould thrown an exception with the error message"{
             {Set-ServiceAccount $account $password $serviceName} | Should -Throw "After trying to change the service account, it does not match the provided one. Failed to change the service account."
         }
     }

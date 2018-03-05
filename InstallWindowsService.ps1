@@ -29,6 +29,7 @@ $win32ServiceChangeErrors =@{
     23="The service exists in the database of services available from the system.";
     24="The service is currently paused in the system.";
 }
+
 function Install-WindowsService ($winServiceName, $installCommand) {
     
     Write-Host "ServiceName: $winServiceName"
@@ -74,6 +75,7 @@ function Install-WindowsService ($winServiceName, $installCommand) {
         throw "Error installing. Return of the installation command: $return "
     }
 }
+
 function Install-WindowsServiceWithInstallUtils ($winServiceName, $serviceBinaryPath){
     $installUtilPath = Get-ChildItem "$env:SystemDrive:\Windows\Microsoft.NET\Framework64\v*\InstallUtil.exe" |  Select-Object -Last 1
     
