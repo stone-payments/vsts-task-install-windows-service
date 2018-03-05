@@ -31,91 +31,113 @@ $win32ServiceChangeErrors =@{
 }
 
 function Install-WindowsService ($winServiceName, $installCommand) {
-    
-    Write-Host "ServiceName: $winServiceName"
-    
-    # Mount service filter criteria.
-    $serviceSearchFilter = "Name='$winServiceName'"
-    # Get installed service
-    $installedService = Get-WmiObject -Class Win32_Service -Filter $serviceSearchFilter
-    
-    # If service is already installed remove previous version.
-    if($installedService -ne $null){
-        
-        # Try delete service.
-        Write-Host "Deleting service..."
-        $deleteResult = $installedService.Delete()
-        
-        # Verify if service was deleted.
-        if($deleteResult.ReturnValue -ne 0){
-            throw "Service $winServiceName cannot be removed"
-        }else{
-            Write-Host "Service $winServiceName deleted successfully."
-        }
-    }
-    
-    $lastec = ""
-    $return = ""
-    
-    "Install command: $installCommand"
-    # Run install command
+    Trace-VstsEnteringInvocation $MyInvocation
     try {
-        ## Executes the command and throws the stdout and stderr to a String  
-        $return = Invoke-Expression "$installCommand 2>&1"
-        $lastec = $LASTEXITCODE
+            
+        Write-Host "ServiceName: $winServiceName"
         
-        if ($lastec -ne 0) {
+        # Mount service filter criteria.
+        $serviceSearchFilter = "Name='$winServiceName'"
+        # Get installed service
+        $installedService = Get-WmiObject -Class Win32_Service -Filter $serviceSearchFilter
+        
+        # If service is already installed remove previous version.
+        if($installedService -ne $null){
+            
+            # Try delete service.
+            Write-Host "Deleting service..."
+            $deleteResult = $installedService.Delete()
+            
+            # Verify if service was deleted.
+            if($deleteResult.ReturnValue -ne 0){
+                throw "Service $winServiceName cannot be removed"
+            }else{
+                Write-Host "Service $winServiceName deleted successfully."
+            }
+        }
+        
+        $lastec = ""
+        $return = ""
+        
+        "Install command: $installCommand"
+        # Run install command
+        try {
+            ## Executes the command and throws the stdout and stderr to a String  
+            $return = Invoke-Expression "$installCommand 2>&1"
+            $lastec = $LASTEXITCODE
+            
+            if ($lastec -ne 0) {
+                throw "Error installing. Return of the installation command: $return "
+            }
+            else {
+                Write-Host "Install succeeded."
+            }
+        }
+        catch {
             throw "Error installing. Return of the installation command: $return "
         }
-        else {
-            Write-Host "Install succeeded."
-        }
-    }
-    catch {
-        throw "Error installing. Return of the installation command: $return "
+
+    }finally {
+        Trace-VstsLeavingInvocation $MyInvocation
     }
 }
 
 function Install-WindowsServiceWithInstallUtils ($winServiceName, $serviceBinaryPath){
-    $installUtilPath = Get-ChildItem "$env:SystemDrive:\Windows\Microsoft.NET\Framework64\v*\InstallUtil.exe" |  Select-Object -Last 1
+    Trace-VstsEnteringInvocation $MyInvocation
+    try{
+        $installUtilPath = Get-ChildItem "$env:SystemDrive:\Windows\Microsoft.NET\Framework64\v*\InstallUtil.exe" |  Select-Object -Last 1
     
-    if($installUtilPath -eq $Null){
-        throw "InstallUtil.exe could not be found on the machine. Please make sure that .NET Framework is installed."
-    }
+        if($installUtilPath -eq $Null){
+            throw "InstallUtil.exe could not be found on the machine. Please make sure that .NET Framework is installed."
+        }
 
-    $installCommand = "$installUtilPath $serviceBinaryPath"
+        $installCommand = "$installUtilPath $serviceBinaryPath"
+        
+        Install-WindowsService  $winServiceName $installCommand
+
+    }finally{
+        Trace-VstsLeavingInvocation $MyInvocation 
+    }
     
-    Install-WindowsService  $winServiceName $installCommand
 }
 
 function Set-ServiceAccount ($account,$password,$serviceName){
-    $serviceFilter = "name='$serviceName'"
+    Trace-VstsEnteringInvocation $MyInvocation
+    try{
+        $serviceFilter = "name='$serviceName'"
     
-    $wmiService = Get-WmiObject win32_service -filter $serviceFilter
-    if ($wmiService) {
-        Stop-Service $serviceName
-        $changeResult = $wmiService.Change($null,$null,$null,$null,$null,$null,$account,$password,$null,$null,$null)
-        if($changeResult.ReturnValue -ne 0 ){
-            throw "An error ocurred while trying to change the service user: " + $win32ServiceChangeErrors.[int]$changeResult.ReturnValue
-        }
-
         $wmiService = Get-WmiObject win32_service -filter $serviceFilter
-        
-        if($wmiService.StartName -ne $account){
-            throw "After trying to change the service account, it does not match the provided one. Failed to change the service account."
-        }
-    }else{
-        throw "The service $serviceName was not found. Could not change the service account."
+        if ($wmiService) {
+            Stop-Service $serviceName
+            $changeResult = $wmiService.Change($null,$null,$null,$null,$null,$null,$account,$password,$null,$null,$null)
+            if($changeResult.ReturnValue -ne 0 ){
+                throw "An error ocurred while trying to change the service user: " + $win32ServiceChangeErrors.[int]$changeResult.ReturnValue
+            }
+    
+            $wmiService = Get-WmiObject win32_service -filter $serviceFilter
+            
+            if($wmiService.StartName -ne $account){
+                throw "After trying to change the service account, it does not match the provided one. Failed to change the service account."
+            }
+        }else{
+            throw "The service $serviceName was not found. Could not change the service account."
+        }        
+    }finally{
+        Trace-VstsLeavingInvocation $MyInvocation
     }
+
 }
 
-function Get-InstalledServiceName($serviceName){        
+function Get-InstalledServiceName($serviceName){
+    Trace-VstsEnteringInvocation $MyInvocation        
     try{        
         $service = Get-Service $serviceName
         return $service.name
     }catch{
         Write-Host "Service $serviceName not found on the current machine, this is probably the first install.Trying to install $serviceName for the first time"    
         return $serviceName
+    }finally{
+        Trace-VstsLeavingInvocation $MyInvocation
     }
 }
 
