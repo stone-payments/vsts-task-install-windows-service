@@ -181,3 +181,97 @@ Describe "Install-WindowsServiceWithInstallUtils" {
         }
     }
 }
+
+Describe "Install-WindowsService"{
+    $serviceName = "MyService" 
+    $installCommand = "C:\apps\some_service\MyCustomService.exe --install"
+
+    Context "When the service already exists on the machine and could NOT be deleted"{
+        Mock Get-WmiObject { 
+            New-Module -AsCustomObject -ScriptBlock {
+                Function Delete {
+                    return @{'ReturnValue'= -1}
+                }
+                Export-ModuleMember -Function *
+            }
+        }        
+        It "Should throw an exception"{
+
+            { Install-WindowsService $serviceName $installCommand  } | Should -Throw "Service MyService cannot be removed"
+        }
+    }
+    Context "When the service already exists on the machine and the installation completes"{
+        Mock Invoke-Expression {$global:LASTEXITCODE = 0; return "returnMessage"}
+        Mock Write-Host {}
+        Mock Get-WmiObject { 
+            New-Module -AsCustomObject -ScriptBlock {
+                Function Delete {
+                    return @{'ReturnValue'= 0}
+                }
+                Export-ModuleMember -Function *
+            }
+        }        
+        Install-WindowsService $serviceName $installCommand
+        It "Should write a message about deleting the service before installing it"{            
+            Assert-MockCalled Write-Host -ParameterFilter { $Object -eq "Service MyService deleted successfully."}
+        }
+        It "Should write a message about successfully installing the service"{            
+            Assert-MockCalled Write-Host -ParameterFilter { $Object -eq "Install succeeded."}
+        }
+    }
+
+    Context "When the service doesn't exist exist on the machine and the install command fails"{
+        Mock Get-WmiObject { $null }
+        Mock Invoke-Expression {$global:LASTEXITCODE = -1; return "returnMessage"}
+
+        It "Should throw an exception"{ 
+            { Install-WindowsService $serviceName $installCommand  } | Should -Throw "Error installing. Return of the installation command: returnMessage "
+        }
+    }
+
+}
+Describe "Set-ServiceAccount"{
+    $account = "customUser"
+    $password = "customPassword"
+    $serviceName = "MyService"
+
+    Context "When the service cannot be found on the machine"{
+        Mock Get-WmiObject {$null}
+        It "Should thrown an exception"{
+            {Set-ServiceAccount $account $password $serviceName} | Should -Throw "The service MyService was not found. Could not change the service account."
+        }
+    }
+    
+    Context "When fails to change the account that runs the service"{
+        Mock Get-WmiObject { 
+            New-Module -AsCustomObject -ScriptBlock {
+                Function Change {
+                    return @{'ReturnValue'= 1}
+                }
+                Export-ModuleMember -Function *
+            }
+        }
+        Mock Stop-Service {}
+
+        It "should thrown an exception with the error message"{
+            {Set-ServiceAccount $account $password $serviceName} | Should -Throw "An error ocurred while trying to change the service user: The request is not supported."
+        }
+    }
+
+    Context "When succeeds to change the account that runs the service but fails to verify it"{
+        Mock Get-WmiObject { 
+            New-Module -AsCustomObject -ScriptBlock {
+                $StartName = "wrongUser"
+                Function Change {
+                    return @{'ReturnValue'= 0}
+                }
+                Export-ModuleMember -Variable * -Function *
+            }
+        }
+        Mock Stop-Service {}
+
+        It "should thrown an exception with the error message"{
+            {Set-ServiceAccount $account $password $serviceName} | Should -Throw "After trying to change the service account, it does not match the provided one. Failed to change the service account."
+        }
+    }
+}

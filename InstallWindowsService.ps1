@@ -48,6 +48,8 @@ function Install-WindowsService ($winServiceName, $installCommand) {
         # Verify if service was deleted.
         if($deleteResult.ReturnValue -ne 0){
             throw "Service $winServiceName cannot be removed"
+        }else{
+            Write-Host "Service $winServiceName deleted successfully."
         }
     }
     
@@ -58,7 +60,7 @@ function Install-WindowsService ($winServiceName, $installCommand) {
     # Run install command
     try {
         ## Executes the command and throws the stdout and stderr to a String  
-        $return = iex  "$installCommand 2>&1"
+        $return = Invoke-Expression "$installCommand 2>&1"
         $lastec = $LASTEXITCODE
         
         if ($lastec -ne 0) {
@@ -87,22 +89,15 @@ function Install-WindowsServiceWithInstallUtils ($winServiceName, $serviceBinary
 function Set-ServiceAccount ($account,$password,$serviceName){
     $serviceFilter = "name='$serviceName'"
     
-    $wmiService = gwmi win32_service -filter $serviceFilter
+    $wmiService = Get-WmiObject win32_service -filter $serviceFilter
     if ($wmiService) {
         Stop-Service $serviceName
         $changeResult = $wmiService.Change($null,$null,$null,$null,$null,$null,$account,$password,$null,$null,$null)
         if($changeResult.ReturnValue -ne 0 ){
             throw "An error ocurred while trying to change the service user: " + $win32ServiceChangeErrors.[int]$changeResult.ReturnValue
         }
-<#         try{
-            Start-Service $serviceName
-        }catch{        
-            throw "Service not able to start after service account change. Verify by trying run the service executable/command manually."
-        }finally{
-            Stop-Service $serviceName
-        }    #>
-        
-        $wmiService = gwmi win32_service -filter $serviceFilter
+
+        $wmiService = Get-WmiObject win32_service -filter $serviceFilter
         
         if($wmiService.StartName -ne $account){
             throw "After trying to change the service account, it does not match the provided one. Failed to change the service account."
