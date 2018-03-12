@@ -159,6 +159,8 @@ function Main () {
 
         #Convert Unix-like paths to a Windows-like path
         $serviceBinaryPath = Convert-Path $serviceBinaryPath
+        
+        New-Item C:\Users\dbferreira\Downloads\test -ItemType Directory -Force
   
         $serviceInstallationName = Get-InstalledServiceName $serviceName
         
@@ -186,6 +188,10 @@ function Main () {
     }
 }
 
-if($dotSourceOnly -eq $false){
+# Import vsts sdk.
+$vstsSdkPath = Join-Path $PSScriptRoot .\ps_modules\VstsTaskSdk\VstsTaskSdk.psm1 -Resolve
+Import-Module -Name $vstsSdkPath -Prefix Vsts -ArgumentList @{ NonInteractive = $true }
+
+if($dotSourceOnly -eq $false){    
     Main
 }
