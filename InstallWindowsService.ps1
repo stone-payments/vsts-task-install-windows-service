@@ -159,9 +159,7 @@ function Main () {
 
         #Convert Unix-like paths to a Windows-like path
         $serviceBinaryPath = Convert-Path $serviceBinaryPath
-        
-        New-Item C:\Users\dbferreira\Downloads\test -ItemType Directory -Force
-  
+          
         $serviceInstallationName = Get-InstalledServiceName $serviceName
         
         ## Installing service
