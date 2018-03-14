@@ -186,10 +186,6 @@ function Main () {
     }
 }
 
-# Import vsts sdk.
-$vstsSdkPath = Join-Path $PSScriptRoot .\ps_modules\VstsTaskSdk\VstsTaskSdk.psm1 -Resolve
-Import-Module -Name $vstsSdkPath -Prefix Vsts -ArgumentList @{ NonInteractive = $true }
-
 if($dotSourceOnly -eq $false){    
     Main
 }
