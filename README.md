@@ -1,3 +1,4 @@
+![](https://stonepagamentos.visualstudio.com/_apis/public/build/definitions/cbfd0924-0dfc-4480-94df-7a12315920f0/220/badge)
 # Install Windows Service VSTS task
 A small task to stop a Windows Service that is running on the same machine as the VSTS agent that executes this task.
 
