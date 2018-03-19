@@ -1,0 +1,57 @@
+{
+  "manifestVersion": 1.0,
+  "id": "install-windows-service",
+  "name": "Install Windows Service",
+  "publisher": "cnatan",
+  "version": "0.0.1",
+  "public": true,
+  "description": "This extension installs a Windows Service that is running on the same machine as the agent.",
+  "_description.comment": "Extension to install a Windows Service on a deployment group.",
+  "categories": [
+    "Build and release"
+  ],
+  "Tags": [
+    "Windows Service",
+    "Release",
+    "Windows",
+    "Service",
+    "Deployment Group",
+    "Install"
+  ],
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "demands": [],
+  "icons": {
+    "default": "icon.png",
+    "large": "icon.png"
+  },
+  "branding": {
+    "color": "#3B3E43",
+    "theme": "dark"
+  },
+  "files": [
+    {
+      "path": "InstallWindowsService.ps1"     
+    }
+  ],
+  "content": {
+    "details": {
+      "path": "readme.md"
+    }
+  },
+  "contributions": [
+    {
+      "id": "custom-install-windows-service",
+      "type": "ms.vss-distributed-task.task",
+      "targets": [
+        "ms.vss-distributed-task.tasks"
+      ],
+      "properties": {
+        "name": "vsts-task-install-windows-service"
+      }
+    }
+  ]
+}
