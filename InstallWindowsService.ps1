@@ -76,7 +76,8 @@ function Install-WindowsService ($winServiceName, $installCommand) {
             }
         }
         catch {
-            $string_err = $_ | Out-String
+            Write-Host $_.Exception | Format-List -force
+            $string_err = $_.Exception
             throw "Error installing. The installation has thrown an exception: $string_err . Return of the installation command: $return "
         }
 
