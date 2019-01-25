@@ -67,7 +67,9 @@ function Install-WindowsService ($winServiceName, $installCommand) {
             $lastec = $LASTEXITCODE
             
             if ($lastec -ne 0) {
-                throw "Error installing. Return of the installation command: $return "
+                $errorMsg = "Error installing. Return of the installation command: $return .`n Returned exit code: $lastec"
+                Write-Host $errorMsg
+                throw $errorMsg
             }
             else {
                 Write-Host "Install succeeded."
