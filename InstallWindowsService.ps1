@@ -63,12 +63,11 @@ function Install-WindowsService ($winServiceName, $installCommand) {
         # Run install command
         try {
             ## Executes the command and throws the stdout and stderr to a String  
-            $return = Invoke-Expression "$installCommand 2>&1"
+            $return = Invoke-Expression "$installCommand"
             $lastec = $LASTEXITCODE
             
             if ($lastec -ne 0) {
                 $errorMsg = "Error installing. Return of the installation command: $return .`n Returned exit code: $lastec"
-                Write-Host $errorMsg
                 throw $errorMsg
             }
             else {
@@ -76,8 +75,7 @@ function Install-WindowsService ($winServiceName, $installCommand) {
             }
         }
         catch {
-            Write-Host $_.Exception | Format-List -force
-            $string_err = $_.Exception
+            $string_err = $_.Exception.ToString()
             throw "Error installing. The installation has thrown an exception: $string_err . Return of the installation command: $return "
         }
 
