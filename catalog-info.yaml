@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+    name: vsts-task-install-windows-service
+    title: VSTS Install Windows Service Task and Scripts
+    description: VSTS Install Windows Service task and scripts. Installs a Windows Service that is running on the same machine as the agent.
+    namespace: stone
+    tags:
+        - powershell
+        - vsts
+        - iac-library
+    annotations:
+      legacy.stone.tech/owner-email: foundation.platform@stone.com.br
+spec:
+    type: library
+    lifecycle: production
+    owner: stone-payments/foundation-platform-experience
